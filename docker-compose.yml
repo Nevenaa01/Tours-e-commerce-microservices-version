@@ -1,0 +1,213 @@
+x-logging: &fluent-bit
+  driver: fluentd
+  options:
+    fluentd-address: ${FLUENT_BIT_ADDRESS}:24224
+
+version: '3.9'
+
+services:
+
+  neo4j:
+    image: neo4j
+    restart: always
+    ports:
+      - "7687:7687"
+      - "7474:7474"
+      - "7473:7473"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "echo RETURN 1 | cypher-shell -a bolt://neo4j:7687 -u neo4j -p userManagement || exit 1",
+        ]
+      interval: 20s
+      timeout: 20s
+      retries: 10
+    environment:
+      - NEO4J_AUTH=neo4j/userManagement
+    volumes:
+      - neo4j_data:/data
+      - type: bind
+        source: './UserManagement/insert.cypher'
+        target: /tmp/insert.cypher
+    networks:
+      - database
+
+  mongo:
+    image: mongo
+    container_name: mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    networks:
+      - database  
+    volumes:
+      - mongodb_data:/data/db
+
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express
+    restart: always
+    ports:
+      - "3000:8081"
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongo
+      - ME_CONFIG_MONGODB_PORT=27017
+    networks:
+      - database
+    volumes:
+      - mongo_express_data:/data/db
+    depends_on:
+      - mongo
+
+  explorer:
+    build:
+      dockerfile: Dockerfile
+      context: ./psw-be
+      target: final
+    restart: on-failure
+    networks:
+      - database
+    ports:
+      - "9000:80"
+    environment:
+      DATABASE_HOST: database
+      DATABASE_PORT: 5432
+      DATABASE_PASSWORD: super
+      DATABASE_USER: postgres
+      DATABASE_SCHEMA: explorer
+    depends_on:
+      - database
+      
+  database:
+    image: postgres:16
+    restart: always
+    networks:
+      - database
+    environment:
+      POSTGRES_PASSWORD: super
+      POSTGRES_USER: postgres
+      POSTGRES_DB: explorer
+    volumes:
+      - type: volume
+        source: database-data
+        target: /var/lib/postgresql/data
+      - type: bind
+        source: './psw-be/Razni fajlovi/DEMO_SKRIPTA.sql'
+        target: /tmp/DEMO_SKRIPTA.sql
+    ports:
+      - "5432:5432"
+
+  user_management_service:
+    build:
+      context: ./UserManagement
+      dockerfile: Dockerfile
+    image: user_managemenet_web_service
+    container_name: user_management_service
+    restart: on-failure
+    networks:
+      - database
+      - monitoring
+    ports:
+      - 8003:8003
+    environment:
+      - PORT=8003
+      - NEO4J_DB=bolt://neo4j:7687  
+      - NEO4J_USERNAME=neo4j
+      - NEO4J_PASS=userManagement
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    logging: *fluent-bit
+
+  tour_service:
+    build:
+      context: ./Tours
+      dockerfile: Dockerfile
+    image: tours_web_service
+    container_name: tours_service
+    restart: on-failure
+    networks:
+      - database
+      - monitoring
+    environment:
+      TOUR_SERVICE_ADDRESS: :8004
+    ports:
+      - "8004:8004" 
+    depends_on:
+      - mongo   
+    logging: *fluent-bit
+      
+  blog_service:
+    build:
+      context: ./Blogs
+      dockerfile: Dockerfile
+    image: blogs_web_service
+    container_name: blogs_service
+    restart: on-failure
+    networks:
+      - database
+      - monitoring
+    environment:
+      BLOG_SERVICE_ADDRESS: :8002
+    ports:
+      - "8002:8002" 
+    depends_on:
+      - database   
+    logging: *fluent-bit
+      
+  stakeholder_service:
+    image: stakeholder_service
+    container_name: stakeholder_service
+    hostname: stakeholder_service
+    build:
+      context: ./Stakeholders
+      dockerfile: Dockerfile
+    restart: on-failure
+    environment:
+      STAKEHOLDER_SERVICE_ADDRESS: :8001
+    ports:
+      - "8001:8001" 
+    networks:
+      - database
+      - monitoring
+    logging: *fluent-bit
+
+  api_gateway:
+    image: api_gateway
+    container_name: api_gateway
+    hostname: api_gateway
+    build:
+      context: ./api-gateway/
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      STAKEHOLDER_SERVICE_ADDRESS: stakeholder_service:8001
+      BLOG_SERVICE_ADDRESS:   blogs_service:8002
+      USER_MANAGEMENT_SERVICE: user_management_service:8003
+      TOUR_SERVICE_ADDRESS: tour_service:8004
+      GATEWAY_ADDRESS: :8000
+    depends_on:
+      - stakeholder_service
+      - blog_service
+      - user_management_service
+      - tour_service
+    networks:
+      - database
+      - monitoring
+    ports:
+      - "8000:8000"    
+    logging: *fluent-bit   
+
+volumes:
+  database-data:
+    name: explorer
+  mongodb_data:
+  mongo_express_data:
+  neo4j_data:
+
+networks:
+  database:
+    name: database
+    driver: bridge    
+  monitoring:

@@ -1,0 +1,83 @@
+syntax = "proto3";
+
+option go_package = "proto/blogs";
+import "google/protobuf/timestamp.proto";
+
+service BlogService {
+  rpc GetBlog(GetBlogRequest) returns (Blog) {}
+  rpc CreateBlog(Blog) returns (Blog){}
+  rpc GetAllBlog(Emptyyy) returns (ListBlog){}
+  rpc UpdateOneBlog(Blog) returns (Blog){}
+  rpc GetAllBlogsByStatus(GetBlogStatus) returns (ListBlog){}
+  rpc UpdateRating(UpdateRatingRequest) returns(Blog){}
+  rpc DeleteRating(DeleteRatingRequest) returns (Blog){}
+  rpc CreateComment(Comment) returns (Comment){}
+  rpc GetCommentsByBlogIdAsync(GetCommentRequest) returns (ListComment){}
+  rpc UpdateComment(Comment) returns (Comment){}
+  rpc DeleteComment(DeleteCommentRequest) returns (Comment){}
+}
+
+message Blog {
+  int32 Id = 1;
+  string Title = 2;
+  string Description = 3;
+  google.protobuf.Timestamp CreationDate = 4;
+  int32 Status = 5;
+  int32 UserId = 6;
+  int32 RatingSum = 8;
+  repeated Rating Ratings = 9;
+}
+
+message Rating {
+  int32 UserId = 1;
+  google.protobuf.Timestamp CreationDate = 2;
+  int32 RatingValue = 3;
+}
+
+message GetBlogRequest {
+  int32 id = 1;
+}
+
+message Emptyyy {} 
+
+message ListBlog { 
+  repeated Blog Blogs = 1;
+}
+
+message GetBlogStatus{
+  int32 state = 1;
+}
+
+message UpdateRatingRequest{
+  int32 blogId = 1;
+  int32 userId = 2;
+  int32 value = 3;
+}
+
+message DeleteRatingRequest{
+  int32 blogId = 1;
+  int32 userId = 2;
+}
+
+message Comment{
+  int32 Id = 1;
+  int32 UserId = 2;
+  string Username = 3;
+  string ProfilePic = 4;
+  google.protobuf.Timestamp CreationDate = 5;
+  string Description = 6;
+  google.protobuf.Timestamp LastEditDate = 7;
+  int32 BlogId = 8;
+}
+
+message GetCommentRequest{
+  int32 blogId = 1;
+}
+
+message ListComment { 
+  repeated Comment Comments = 1;
+}
+
+message DeleteCommentRequest {
+  int32 id = 1;
+}

@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+option go_package = "proto/auth";
+
+import "google/api/annotations.proto";
+
+service StakeholderService {
+  rpc LogIn(RequestLogIn) returns (ResponseLogIn) {
+    option (google.api.http) = {
+      post: "/api/users/login"
+      body: "*"
+    };
+  }
+  rpc RegisterTourist(RequestRegister) returns (ResponseLogIn) {
+    option (google.api.http) = {
+      post: "/api/users"
+      body: "*"
+    };
+  }
+  rpc ActivateUser(RequestActivateUser) returns (ResponseLogIn) {
+    option (google.api.http) = {
+      post: "/api/users/activateUser"
+      body: "*"
+    };
+  }
+  rpc ChangePassword(RequestChangePassword) returns (RequestActivateUser) {
+    option (google.api.http) = {
+      post: "/api/users/activateUser/changePassword"
+      body: "*"
+    };
+  }
+  rpc changePasswordRequest(RequestChangePasswordRequest) returns (RequestActivateUser) {
+    option (google.api.http) = {
+      post: "/api/users/activateUser/changePasswordRequest"
+      body: "*"
+    };
+  }
+}
+
+message RequestLogIn {
+  string username = 1;
+  string password = 2;
+}
+
+message ResponseLogIn {
+  int64  id = 3;
+  string accessToken=4;
+}
+
+
+message RequestRegister {
+  string username = 5;
+  string password = 6;
+  string email = 7;
+  string name = 8;
+  string surname = 9;
+}
+
+message RequestActivateUser {
+  string token = 10;
+}
+
+
+
+message RequestChangePassword {
+  string newPassword = 11;
+  string newPasswordConfirm = 12;
+  string token = 13;
+}
+
+
+message RequestChangePasswordRequest {
+  string email = 14;
+}

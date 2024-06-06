@@ -1,0 +1,132 @@
+syntax = "proto3";
+
+option go_package = "proto/tours";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+
+service TourService{
+    rpc CreateTour(Tour) returns (Tour){
+        option (google.api.http) = {
+            post: "/createTour"
+            body: "*"
+        };
+    }
+
+    rpc GetTourById(GetTourRequest) returns (Tour) {
+        option (google.api.http) = {
+            get: "/tours/{id}"
+        };
+    }
+
+    rpc GetToursByAuthorId(GetToursByAuthorIdRequest) returns (GetToursByAuthorIdResponse){
+        option (google.api.http) = {
+            get: "/tours/author/{id}"
+        };
+    }
+    
+    rpc UpdateTour(Tour) returns (Tour){
+        option (google.api.http) = {
+            put: "/updateTour"
+            body: "*"
+        };
+    }
+
+    rpc GetAll(Empty) returns (GetAllResponse) {
+        option (google.api.http) = {
+            get: "/getAll"
+        };
+    }
+}
+
+service KeypointService{
+    rpc CreateTourKeypoint(Keypoint) returns (Keypoint){
+        option (google.api.http) = {
+            post: "/createTourKeypoint"
+            body: "*"
+        };
+    }
+    rpc GetByTourId(GetTourRequest) returns (KeypointsResponse){
+        option (google.api.http) = {
+            get: "/getByTourId/{id}"
+        };
+    }
+}
+
+message Tour{
+    int32 Id = 1;
+    string Name = 2;
+    string Description = 3;
+    int32 Difficulty = 4;
+    repeated string Tags = 5;
+    int32 Status = 6;
+    double Price = 7;
+    int32 AuthorId = 8;
+    repeated int32 Equipment = 9;
+    double DistanceInKm = 10;
+    google.protobuf.Timestamp ArchivedDate = 11;
+    google.protobuf.Timestamp PublishDate = 12;
+    repeated TourDuration Durations = 13;
+    repeated Keypoint Keypoints = 14;
+    string Image = 15;
+}
+
+message TourDuration{
+    uint32 TimeInSeconds = 1;
+    int32 Transportation = 2;
+}
+
+message Keypoint{
+    int32 Id = 1;
+    string Name = 2;
+    string Description = 3;
+    string Image = 4;
+    double Latitude = 5;
+    double Longitude = 6;
+    int32 TourId = 7;
+    int32 PositionInTour = 8;
+    string Secret = 9;
+    string Discriminator = 10;
+}
+message CreateTourRequest {
+    Tour tour = 1;
+}
+
+message CreateTourResponse{
+    Tour tour = 1;
+}
+
+message GetTourRequest{
+    int32 id = 1;
+}
+
+message GetTourResponse{
+    Tour tour = 1;
+}
+
+message GetToursByAuthorIdRequest{
+    int32 id = 1;
+}
+
+message GetToursByAuthorIdResponse{
+    repeated Tour tour = 1;
+}
+
+message UpdateTourRequest{
+    Tour tour = 1;
+}
+
+message UpdateTourResponse{
+    Tour tour = 1;
+}
+
+message Empty {}
+
+message GetAllResponse{
+    repeated Tour results = 1;
+    int32 totalCount = 2;
+}
+
+message KeypointsResponse{
+    repeated Keypoint results = 1;
+}

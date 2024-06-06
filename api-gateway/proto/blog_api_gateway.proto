@@ -1,0 +1,145 @@
+syntax = "proto3";
+
+option go_package = "proto/blogs";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+service BlogService {
+  rpc GetBlog(GetBlogRequest) returns (Blog) {
+    option (google.api.http) = {
+      get: "/blogs/{id}"
+    };
+  }
+
+  rpc CreateBlog(Blog) returns (Blog) {
+    option (google.api.http) = {
+      post: "/blogs",
+      body: "*"
+    };
+  }
+
+  rpc GetAllBlog(Emptyyy) returns (ListBlog){
+    option (google.api.http) = {
+      get: "/blogs"
+    };
+  }
+  
+  rpc UpdateOneBlog(Blog) returns (Blog){
+    option (google.api.http) = {
+      put: "/blogs/updateOneBlog",
+      body: "*"
+    };
+  }
+
+  rpc GetAllBlogsByStatus(GetBlogStatus) returns (ListBlog){
+    option (google.api.http) = {
+      get: "/blogs/getByStatus/{state}"
+    };
+  }
+  rpc UpdateRating(UpdateRatingRequest) returns(Blog){
+    option (google.api.http) = {
+      put: "/blogs/rating/{userId}/{blogId}/{value}",
+      body: "*"
+    };
+  }
+
+  rpc DeleteRating(DeleteRatingRequest) returns (Blog){
+    option (google.api.http) = {
+      delete: "/blogs/rating/{userId}/{blogId}"
+    };
+  }
+
+  rpc CreateComment(Comment) returns (Comment){
+    option (google.api.http) = {
+      post: "/comment",
+      body: "*"
+    };
+  }
+
+  rpc GetCommentsByBlogIdAsync(GetCommentRequest) returns (ListComment){
+    option (google.api.http) = {
+      get: "/comment/{blogId}"
+    };
+  }
+
+  rpc UpdateComment(Comment) returns (Comment){
+    option (google.api.http) = {
+      put: "/comment",
+      body: "*"
+    };
+  }
+
+  rpc DeleteComment(DeleteCommentRequest) returns (Comment){
+    option (google.api.http) = {
+      delete: "/comment/{id}"
+    };
+  }
+}
+
+
+message Blog {
+  int32 Id = 1;
+  string Title = 2;
+  string Description = 3;
+  google.protobuf.Timestamp CreationDate = 4;
+  int32 Status = 5;
+  int32 UserId = 6;
+  int32 RatingSum = 8;
+  repeated Rating Ratings = 9;
+}
+
+message Rating {
+  int32 UserId = 1;
+  google.protobuf.Timestamp CreationDate = 2;
+  int32 RatingValue = 3;
+}
+
+message GetBlogRequest {
+  int32 id = 1;
+}
+
+message Emptyyy {} 
+
+message ListBlog { 
+  repeated Blog Blogs = 1;
+}
+
+message GetBlogStatus{
+  int32 state = 1;
+}
+
+message UpdateRatingRequest{
+  int32 blogId = 1;
+  int32 userId = 2;
+  int32 value = 3;
+}
+
+message DeleteRatingRequest{
+  int32 blogId = 1;
+  int32 userId = 2;
+}
+
+message Comment{
+  int32 Id = 1;
+  int32 UserId = 2;
+  string Username = 3;
+  string ProfilePic = 4;
+  google.protobuf.Timestamp CreationDate = 5;
+  string Description = 6;
+  google.protobuf.Timestamp LastEditDate = 7;
+  int32 BlogId = 8;
+}
+
+message GetCommentRequest{
+  int32 blogId = 1;
+}
+
+message ListComment { 
+  repeated Comment Comments = 1;
+}
+
+
+message DeleteCommentRequest {
+  int32 id = 1;
+}
